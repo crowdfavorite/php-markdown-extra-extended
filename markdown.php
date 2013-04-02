@@ -916,7 +916,7 @@ class Markdown_Parser {
 		#
 		$text = preg_replace_callback('{
 				^(\#{1,6})	# $1 = string of #\'s
-				[ ]*
+				[ ]+		# Require space following #\'s (Crowd Favorite)
 				(.+?)		# $2 = Header text
 				[ ]*
 				\#*			# optional closing #\'s (not counted)
@@ -2248,7 +2248,7 @@ class MarkdownExtra_Parser extends Markdown_Parser {
 		#
 		$text = preg_replace_callback('{
 				^(\#{1,6})	# $1 = string of #\'s
-				[ ]*
+				[ ]+		# Require space following #\'s (Crowd Favorite)
 				(.+?)		# $2 = Header text
 				[ ]*
 				\#*			# optional closing #\'s (not counted)
