@@ -238,6 +238,8 @@ class Markdown_Parser {
 	var $predef_urls = array();
 	var $predef_titles = array();
 
+	# Internally used to check if this is an Extended parser or not
+	var $extended = false;
 
 	function Markdown_Parser() {
 	#
@@ -1872,9 +1874,14 @@ class MarkdownExtra_Parser extends Markdown_Parser {
 				|
 					<!\[CDATA\[.*?\]\]>	# CData Block
 				|
-					# Code span marker
+				' . ( $this->extended ? '
+					# Code span marker - one or two ` only
+					(?<!`)`{1,2}(?!`)
+				' : '
+					# Code span marker - any number of `
 					`+
-				'. ( !$span ? ' # If not in span.
+				' ) # End extended-only
+				. ( !$span ? ' # If not in span.
 				|
 					# Indented code block
 					(?: ^[ ]*\n | ^ | \n[ ]*\n )
@@ -1884,9 +1891,15 @@ class MarkdownExtra_Parser extends Markdown_Parser {
 					)*
 				|
 					# Fenced code block marker
-					(?> ^ | \n )
+					(?: ^ | \n )
 					[ ]{'.($indent).'}~~~+[ ]*\n
-				' : '' ). ' # End (if not is span).
+				'. ( $this->extended ? ' # Only for Extended
+				|
+					# Fenced code block marker
+					(?<= ^ | \n )
+					[ ]{'.($indent).'}`{3,}(?=[ ]?(?:\w+)?(?:,[ ]?(?:\d+))?[ ]* \n)
+				' : ''      # End (Extended)
+				) : '' ). ' # End (if not is span).
 				)
 			}xs';
 
@@ -1929,9 +1942,9 @@ class MarkdownExtra_Parser extends Markdown_Parser {
 			$tag_re = preg_quote($tag); # For use in a regular expression.
 			
 			#
-			# Check for: Code span marker
+			# Check for: Code span marker - one or two only, in extended
 			#
-			if ($tag{0} == "`") {
+			if ($tag{0} == "`" && (!$this->extended || strlen($tag) < 3)) {
 				# Find corresponding end marker.
 				$tag_re = preg_quote($tag);
 				if (preg_match('{^(?>.+?|\n(?!\n))*?(?<!`)'.$tag_re.'(?!`)}',
@@ -1957,11 +1970,11 @@ class MarkdownExtra_Parser extends Markdown_Parser {
 			#
 			# Check for: Fenced code block marker.
 			#
-			else if ($tag{0} == "~") {
+			else if ($tag{0} == "~" || ($tag{0} == "`" && $this->extended)) {
 				# Fenced code block marker: find matching end marker.
 				$tag_re = preg_quote(trim($tag));
-				if (preg_match('{^(?>.*\n)+?'.$tag_re.' *\n}', $text, 
-					$matches)) 
+				if (preg_match('{^(?>.*\n)+?'.$tag_re.' *\n}', $text,
+					$matches))
 				{
 					# End marker found: pass text unchanged until marker.
 					$parsed .= $tag . $matches[0];

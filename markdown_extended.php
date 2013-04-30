@@ -15,6 +15,8 @@ class MarkdownExtraExtended_Parser extends MarkdownExtra_Parser {
 	function MarkdownExtraExtended_Parser($default_classes = array()) {
 	    $default_classes = $default_classes;
 		
+		$this->extended = true;
+
 		$this->block_gamut += array(
 			"doFencedFigures" => 7,
 		);
